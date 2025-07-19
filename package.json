@@ -1,0 +1,26 @@
+{
+    "name": "typescript-api-server",
+    "version": "1.0.0",
+    "description": "TypeScript server with external API integration",
+    "main": "dist/server.js",
+    "scripts": {
+        "start": "node dist/server.js",
+        "dev": "ts-node src/server.ts",
+        "build": "tsc",
+        "watch": "tsc -w"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "axios": "^1.6.0",
+        "swagger-jsdoc": "^6.2.8",
+        "swagger-ui-express": "^5.0.0"
+    },
+    "devDependencies": {
+        "@types/express": "^4.17.21",
+        "@types/node": "^20.8.0",
+        "@types/swagger-jsdoc": "^6.0.1",
+        "@types/swagger-ui-express": "^4.1.4",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.2.2"
+    }
+}
