@@ -1,7 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import swaggerUi from 'swagger-ui-express';
-import { BASE_URL, Stop, ApiResponse } from './mbta-api';
+import { BASE_URL, Stop, ApiResponse, RouteType } from './mbta-api';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
@@ -11,15 +11,14 @@ const app = express();
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
-app.get('/stops', async (req, res) => {
+app.get('/stops', async (_, res) => {
     try {
         // Fetch stops from MBTA API
-        const response = await axios.get(`${BASE_URL}/stops?include=route&filter%5Broute_type%5D=0`);
-        const stops: Stop[] = response.data.data.map((stop: any) => ({
-            id: stop.id,
-            attributes: stop.attributes,
-            parent_station: stop.relationships.parent_station.data.id,
-        }));
+        const [lightStops, heaveyStops] = await Promise.all([
+            fetchStops(RouteType.LIGHT_RAIL),
+            fetchStops(RouteType.HEAVY_RAIL)
+        ]);
+        const stops: Stop[] = [...lightStops, ...heaveyStops];
 
         const apiResponse: ApiResponse<Stop[]> = {
             success: true,
@@ -39,7 +38,22 @@ app.get('/stops', async (req, res) => {
     }
 });
 
-app.get('/health', (req, res) => {
+/**
+ * Fetch light/heave rail stops from MBTA API.
+ * 
+ * @param routeType - The type of route to filter stops
+ * @returns (Promise) Array of stops
+ */
+async function fetchStops(routeType: RouteType): Promise<Stop[]> {
+    return axios.get(`${BASE_URL}/stops?include=route&filter%5Broute_type%5D=${routeType}`)
+        .then(response => response.data.data.map((stop: any) => ({
+            id: stop.id,
+            attributes: stop.attributes,
+            parent_station: stop.relationships.parent_station.data.id,
+        })))
+}
+
+app.get('/health', (_, res) => {
     res.json({
         status: 'OK',
         timestamp: new Date().toISOString()

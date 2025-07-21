@@ -9,6 +9,11 @@ export interface ApiResponse<T> {
     error?: string;
 }
 
+export enum RouteType {
+    LIGHT_RAIL = 0, // Tram, Streetcar, Light rail
+    HEAVY_RAIL = 1, // Subway, Metro
+}
+
 // Types
 export interface Stop {
     id: string
