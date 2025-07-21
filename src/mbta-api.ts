@@ -21,6 +21,7 @@ export async function fetchAndCacheAllStops(): Promise<Stop[]> {
 
 export async function fetchAllStops(): Promise<Stop[]> {
     if (stopsCache) {
+        console.log('Using cached stops');
         return stopsCache;
     }
     return await fetchAndCacheAllStops();

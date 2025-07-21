@@ -1,5 +1,5 @@
 import express from 'express';
-import { Stop } from './types';
+import { Stop, Coordinates } from './types';
 import swaggerUi from 'swagger-ui-express';
 import { fetchAllStops, fetchAndCacheAllStops, fetchLinesByParentStation } from './mbta-api';
 import { PORT } from './env';
@@ -37,7 +37,51 @@ app.get('/stops', async (_, res) => {
     }
 });
 
-app.get('/linesByStopId/:stopId', async (req, res) => {
+app.get('/stops/:stopId/coordinates', async (req, res) => {
+    const { stopId } = req.params;
+    // Validate stopId
+    const id = parseInt(stopId);
+    if (isNaN(id) || id < 10000 || id > 99999) {
+        const response: ApiResponse<null> = {
+            success: false,
+            error: 'Invalid Stop ID - Light/Heavy rail stop IDs must be positive 5-digit integers.'
+        };
+        return res.status(400).json(response);
+    }
+
+    try {
+        const allStops = await fetchAllStops();
+        // Check if the stop exists
+        const stop = allStops.find(s => s.id === stopId);
+        if (!stop) {
+            return res.status(404).json({
+                success: false,
+                error: 'Stop not found'
+            });
+        }
+
+        const apiResponse: ApiResponse<Coordinates> = {
+            success: true,
+            data: {
+                latitude: stop.attributes.latitude,
+                longitude: stop.attributes.longitude
+            }
+        };
+
+        res.json(apiResponse);
+    } catch (error) {
+        console.error('Error fetching Stop\'s GPS Coordinates:', error);
+
+        const apiResponse: ApiResponse<null> = {
+            success: false,
+            error: 'Failed to fetch Stop\'s GPS Coordinates'
+        };
+
+        res.status(500).json(apiResponse);
+    }
+});
+
+app.get('/stops/:stopId/lines', async (req, res) => {
     const { stopId } = req.params;
     // Validate stopId
     const id = parseInt(stopId);
@@ -71,11 +115,11 @@ app.get('/linesByStopId/:stopId', async (req, res) => {
 
         res.json(apiResponse);
     } catch (error) {
-        console.error('Error fetching lines by stop:', error);
+        console.error('Error fetching lines going through stop:', error);
 
         const apiResponse: ApiResponse<null> = {
             success: false,
-            error: 'Failed to fetch lines by stop'
+            error: 'Failed to fetch lines going through stop'
         };
 
         res.status(500).json(apiResponse);
