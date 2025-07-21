@@ -1,7 +1,7 @@
 import express from 'express';
-import axios from 'axios';
+import { Stop } from './types';
 import swaggerUi from 'swagger-ui-express';
-import { BASE_URL, Stop, ApiResponse, RouteType } from './mbta-api';
+import { fetchAllStops, fetchAndCacheAllStops, fetchLinesByParentStation } from './mbta-api';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
@@ -11,20 +11,19 @@ const app = express();
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
+export interface ApiResponse<T> {
+    success: boolean;
+    data?: T;
+    error?: string;
+}
+
+// Fetch all rail stops from MBTA API
 app.get('/stops', async (_, res) => {
     try {
-        // Fetch stops from MBTA API
-        const [lightStops, heaveyStops] = await Promise.all([
-            fetchStops(RouteType.LIGHT_RAIL),
-            fetchStops(RouteType.HEAVY_RAIL)
-        ]);
-        const stops: Stop[] = [...lightStops, ...heaveyStops];
-
         const apiResponse: ApiResponse<Stop[]> = {
             success: true,
-            data: stops
+            data: await fetchAndCacheAllStops()
         };
-
         res.json(apiResponse);
     } catch (error) {
         console.error('Error fetching stops:', error);
@@ -38,20 +37,51 @@ app.get('/stops', async (_, res) => {
     }
 });
 
-/**
- * Fetch light/heave rail stops from MBTA API.
- * 
- * @param routeType - The type of route to filter stops
- * @returns (Promise) Array of stops
- */
-async function fetchStops(routeType: RouteType): Promise<Stop[]> {
-    return axios.get(`${BASE_URL}/stops?include=route&filter%5Broute_type%5D=${routeType}`)
-        .then(response => response.data.data.map((stop: any) => ({
-            id: stop.id,
-            attributes: stop.attributes,
-            parent_station: stop.relationships.parent_station.data.id,
-        })))
-}
+app.get('/linesByStopId/:stopId', async (req, res) => {
+    const { stopId } = req.params;
+    // Validate stopId
+    const id = parseInt(stopId);
+    if (isNaN(id) || id < 10000 || id > 99999) {
+        const response: ApiResponse<null> = {
+            success: false,
+            error: 'Invalid Stop ID - Light/Heavy rail stop IDs must be positive 5-digit integers.'
+        };
+        return res.status(400).json(response);
+    }
+
+    try {
+        const allStops = await fetchAllStops();
+        // Check if the stop exists
+        const stop = allStops.find(s => s.id === stopId);
+        if (!stop) {
+            return res.status(404).json({
+                success: false,
+                error: 'Stop not found'
+            });
+        }
+
+        // Fetch lines for the stop
+        console.log(`Fetching lines for stop ${stop.parent_station}`);
+        const lines = await fetchLinesByParentStation(stop.parent_station);
+        console.log(`Fetched ${lines.length} lines`);
+        const apiResponse: ApiResponse<string[]> = {
+            success: true,
+            data: lines
+        };
+
+        res.json(apiResponse);
+    } catch (error) {
+        console.error('Error fetching lines by stop:', error);
+
+        const apiResponse: ApiResponse<null> = {
+            success: false,
+            error: 'Failed to fetch lines by stop'
+        };
+
+        res.status(500).json(apiResponse);
+    }
+});
+
 
 app.get('/health', (_, res) => {
     res.json({
