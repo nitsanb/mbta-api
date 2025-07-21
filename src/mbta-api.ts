@@ -34,7 +34,7 @@ export async function fetchAllStops(): Promise<Stop[]> {
  * @returns (Promise) Array of stops
  */
 async function fetchStops(routeType: RouteType): Promise<Stop[]> {
-    return axios.get(`${BASE_URL}/stops?include=route&filter%5Broute_type%5D=${routeType}`)
+    return axios.get(`${BASE_URL}/stops?include=route&filter[route_type]=${routeType}`)
         .then(response => response.data.data.map((stop: any) => ({
             id: stop.id,
             attributes: stop.attributes,
@@ -43,6 +43,6 @@ async function fetchStops(routeType: RouteType): Promise<Stop[]> {
 }
 
 export async function fetchLinesByParentStation(stopId: string): Promise<string[]> {
-    return await axios.get(`${BASE_URL}/routes/filter?stop=${stopId}`)
+    return await axios.get(`${BASE_URL}/routes?filter[stop]=${stopId}`)
         .then(response => response.data.data.map((line: any) => line.attributes.long_name))
 }
