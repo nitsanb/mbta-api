@@ -24,21 +24,13 @@ export const swaggerSpecs = swaggerJsdoc(swaggerOptions);
 
 /**
  * @swagger
- * /posts/{id}:
+ * /stops:
  *   get:
- *     summary: Get a post by ID from JSONPlaceholder API
- *     tags: [Posts]
- *     parameters:
- *       - in: path
- *         name: id
- *         schema:
- *           type: integer
- *         required: true
- *         description: The post ID
- *         example: 1
+ *     summary: Fetch all stops
+ *     tags: [Stops]
  *     responses:
  *       200:
- *         description: Successfully retrieved the post
+ *         description: A list of stops
  *         content:
  *           application/json:
  *             schema:
@@ -48,20 +40,34 @@ export const swaggerSpecs = swaggerJsdoc(swaggerOptions);
  *                   type: boolean
  *                   example: true
  *                 data:
- *                   type: object
- *                   properties:
- *                     userId:
- *                       type: integer
- *                       example: 1
- *                     id:
- *                       type: integer
- *                       example: 1
- *                     title:
- *                       type: string
- *                       example: "sunt aut facere repellat provident occaecati excepturi optio reprehenderit"
- *                     body:
- *                       type: string
- *                       example: "quia et suscipit\\nsuscipit recusandae consequuntur expedita et cum\\nreprehenderit molestiae ut ut quas totam\\nnostrum rerum est autem sunt rem eveniet architecto"
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: string
+ *                         example: "stop_123"
+ *                       attributes:
+ *                         type: object
+ *                         properties:
+ *                           name:
+ *                             type: string
+ *                             example: "Stop Name"
+ *                           description:
+ *                             type: string
+ *                             example: "Stop Description"
+ *                           line:
+ *                             type: string
+ *                             example: "Red Line"
+ *                           latitude:
+ *                             type: number
+ *                             example: 42.3601
+ *                           longitude:
+ *                             type: number
+ *                             example: -71.0589
+ *                       parent_station:
+ *                         type: string
+ *                         example: "parent_station_123"
  *       404:
  *         description: Post not found
  *         content:

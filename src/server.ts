@@ -1,6 +1,7 @@
 import express from 'express';
 import axios from 'axios';
 import swaggerUi from 'swagger-ui-express';
+import { BASE_URL, Stop, ApiResponse } from './mbta-api';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
@@ -10,66 +11,33 @@ const app = express();
 app.use(express.json());
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
-// Types
-interface Post {
-    userId: number;
-    id: number;
-    title: string;
-    body: string;
-}
-
-interface ApiResponse<T> {
-    success: boolean;
-    data?: T;
-    error?: string;
-}
-
-app.get('/posts/:id', async (req, res) => {
+app.get('/stops', async (req, res) => {
     try {
-        const { id } = req.params;
+        // Fetch stops from MBTA API
+        const response = await axios.get(`${BASE_URL}/stops?include=route&filter%5Broute_type%5D=0`);
+        const stops: Stop[] = response.data.data.map((stop: any) => ({
+            id: stop.id,
+            attributes: stop.attributes,
+            parent_station: stop.relationships.parent_station.data.id,
+        }));
 
-        // Validate ID parameter
-        const postId = parseInt(id);
-        if (isNaN(postId) || postId < 1) {
-            const response: ApiResponse<null> = {
-                success: false,
-                error: 'Invalid post ID. Must be a positive integer.'
-            };
-            return res.status(400).json(response);
-        }
-
-        // Make external API request to JSONPlaceholder
-        const apiResponse = await axios.get<Post>(
-            `https://jsonplaceholder.typicode.com/posts/${postId}`
-        );
-
-        // JSONPlaceholder returns an empty object for non-existent posts
-        if (!apiResponse.data.id) {
-            const response: ApiResponse<null> = {
-                success: false,
-                error: 'Post not found'
-            };
-            return res.status(404).json(response);
-        }
-
-        const response: ApiResponse<Post> = {
+        const apiResponse: ApiResponse<Stop[]> = {
             success: true,
-            data: apiResponse.data
+            data: stops
         };
 
-        res.json(response);
+        res.json(apiResponse);
     } catch (error) {
-        console.error('Error fetching post:', error);
+        console.error('Error fetching stops:', error);
 
-        const response: ApiResponse<null> = {
+        const apiResponse: ApiResponse<null> = {
             success: false,
-            error: 'Failed to fetch post'
+            error: 'Failed to fetch stops'
         };
 
-        res.status(500).json(response);
+        res.status(500).json(apiResponse);
     }
 });
-
 
 app.get('/health', (req, res) => {
     res.json({
