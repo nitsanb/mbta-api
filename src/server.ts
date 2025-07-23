@@ -1,7 +1,7 @@
 import express from 'express';
 import { Stop, Coordinates, AdjacentStopsOnLine } from './types';
 import swaggerUi from 'swagger-ui-express';
-import { fetchAllStops, fetchAndCacheAllStops, fetchLineNamesByParentStation, fetchAdjacentStops } from './mbta-api';
+import { fetchAllStops, fetchAndCacheAllStops, fetchLineNamesByParentStation, fetchAdjacentStops } from './logic';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
