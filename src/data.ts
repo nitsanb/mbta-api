@@ -15,7 +15,13 @@ export async function fetchAndCacheAllStops(): Promise<Stop[]> {
     const stops = fetchMbtaRailsStops()
         .then(response => response.data.data.map((stop: any) => ({
             id: stop.id,
-            attributes: stop.attributes,
+            attributes: {
+                name: stop.attributes.name,
+                description: stop.attributes.description,
+                line: stop.attributes.line,
+                latitude: stop.attributes.latitude,
+                longitude: stop.attributes.longitude
+            },
             parent_station: stop.relationships.parent_station.data.id,
         })))
     stopsCache = await stops;
