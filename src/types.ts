@@ -25,5 +25,5 @@ export interface RoutePattern {
 
 export interface AdjacentStopsOnLine {
     line: string;
-    stops: Stop[];
+    adjacent_stops: Stop[];
 }

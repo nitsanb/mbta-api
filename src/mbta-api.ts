@@ -1,5 +1,10 @@
 import axios, { AxiosResponse } from 'axios';
 
+/**
+ * Functions that call all required endpoints of the MBTA API.
+ * These functions are used to fetch data about stops, routes, and patterns of light/heavy rail ONLY.
+ */
+
 const BASE_URL = "https://api-v3.mbta.com"
 
 enum RouteType {
@@ -7,11 +12,6 @@ enum RouteType {
     HEAVY_RAIL = 1, // Subway, Metro
 }
 
-/**
- * Fetch light/heavy rail stops from MBTA API. Error handling is done by the calling route handler.
- * 
- * @returns (Promise) Response from MBTA API containing stops data
- */
 export async function fetchMbtaRailsStops(): Promise<AxiosResponse<any>> {
     return axios.get(`${BASE_URL}/stops?include=route&filter[route_type]=${RouteType.LIGHT_RAIL},${RouteType.HEAVY_RAIL}`)
 }

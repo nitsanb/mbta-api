@@ -7,10 +7,15 @@ import {
 } from './mbta-api';
 import { AdjacentStopsOnLine, RoutePattern, Stop } from './types';
 
-const BASE_URL = "https://api-v3.mbta.com"
-
+// Use a local cache to minimize the call to fetch all stops from the MBTA
 export let stopsCache: Stop[] = [];
 
+
+/**
+ * Fetch all rail stops from MBTA API and cache them.
+ * 
+ * @returns (Promise) Array of Stop objects
+ */
 export async function fetchAndCacheAllStops(): Promise<Stop[]> {
     const stops = fetchMbtaRailsStops()
         .then(response => response.data.data.map((stop: any) => ({
@@ -28,6 +33,11 @@ export async function fetchAndCacheAllStops(): Promise<Stop[]> {
     return stopsCache;
 }
 
+/**
+ * Fetch all stops from the cache or from the MBTA API if cache is empty.
+ * 
+ * @returns (Promise) Array of Stop objects
+ */
 export async function fetchAllStops(): Promise<Stop[]> {
     if (stopsCache.length > 0) {
         console.log('Using cached stops');
@@ -36,12 +46,26 @@ export async function fetchAllStops(): Promise<Stop[]> {
     return await fetchAndCacheAllStops();
 }
 
+/**
+ * Fetch line names going through a stop by its ID.
+ * While any stop ID can be used, only IDs of parent stations will return multiple lines.
+ * 
+ * @param stopId - The ID of the stop
+ * @returns (Promise) Array of line names
+ */
 export async function fetchLineNamesByParentStation(stopId: string): Promise<string[]> {
     console.log(`Fetching lines for stop ${stopId}`);
     return fetchMbtaRoutesByStopId(stopId)
         .then(response => response.data.data.map((line: any) => line.attributes.long_name))
 }
 
+/**
+ * Fetch adjacent stops on each line going through a stop for a given stop ID.
+ * A stop can have one or two adjacent stops in a route.
+ * 
+ * @param targetStop - The stop for which to find adjacent stops
+ * @returns (Promise) Array of AdjacentStopsOnLine objects
+ */
 export async function fetchAdjacentStops(targetStop: Stop): Promise<AdjacentStopsOnLine[]> {
     console.log(`Fetching adjacent stops for stop ${targetStop.id}`);
     // Get the routes from the parent station
@@ -52,7 +76,7 @@ export async function fetchAdjacentStops(targetStop: Stop): Promise<AdjacentStop
         new Map(routePatterns.map(pattern => [pattern.route_name, pattern])).values()
     );
     console.log(`Found ${uniqueRoutePatterns.length} unique route patterns: ${JSON.stringify(uniqueRoutePatterns.map(p => p.route_name))}`);
-    // Trips contain only the stop IDs. Fetch the stops and find the adjacent stops in the trip.
+    // Trips contain only the stop IDs. For each trip, fetch the stops and find the adjacent stops in that trip.
     const stopsByLine: AdjacentStopsOnLine[] = [];
     for (const pattern of uniqueRoutePatterns) {
         const stopIds = await fetchTripStopIds(pattern.representative_trip);
@@ -60,18 +84,21 @@ export async function fetchAdjacentStops(targetStop: Stop): Promise<AdjacentStop
         const adjacentStops = getAdjacentStops(targetStop, tripStops);
         stopsByLine.push({
             line: pattern.route_name,
-            stops: adjacentStops
+            adjacent_stops: adjacentStops
         });
     }
-    const simplified = stopsByLine.map(line => ({
-        line: line.line,
-        stops: line.stops.map(stop => stop.attributes.name)
-    }));
-    const toLog = JSON.stringify(simplified, null, 2);
-    console.log(toLog);
+
     return stopsByLine;
 }
 
+/**
+ * Fetch canonical route patterns for a given stop.
+ * Route patterns with the term "canonical" contain trips with all the stops for that line.
+ * This will return a route pattern for each line that the stop belongs to.
+ * 
+ * @param stop - The stop for which to fetch route patterns
+ * @returns (Promise) Array of RoutePattern objects
+ */
 async function fetchCanonicalRoutePatterns(stop: Stop): Promise<RoutePattern[]> {
     const parentStopId = stop.parent_station;
     console.log(`Fetching canonical route patterns for parent stop ${parentStopId}`);
@@ -114,11 +141,26 @@ function getAdjacentStops(targetStop: Stop, routeStops: Stop[]): Stop[] {
     }
     const adjacentStops: Stop[] = [];
     if (targetIndex > 0) {
-        adjacentStops.push(routeStops[targetIndex - 1]); // Previous stop
+        adjacentStops.push(mbtaStopToSimpleStop(routeStops[targetIndex - 1])); // Previous stop
     }
     if (targetIndex < routeStops.length - 1) {
-        adjacentStops.push(routeStops[targetIndex + 1]); // Next stop
+        adjacentStops.push(mbtaStopToSimpleStop(routeStops[targetIndex + 1])); // Next stop
     }
     return adjacentStops;
+}
+
+// Retain only the necessary attributes from the MBTA Stop object
+function mbtaStopToSimpleStop(stop: Stop): Stop {
+    return {
+        id: stop.id,
+        attributes: {
+            name: stop.attributes.name,
+            description: stop.attributes.description,
+            line: stop.attributes.line,
+            latitude: stop.attributes.latitude,
+            longitude: stop.attributes.longitude
+        },
+        parent_station: stop.parent_station
+    };
 }
 

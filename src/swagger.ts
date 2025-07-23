@@ -113,10 +113,10 @@ export const swaggerSpecs = swaggerJsdoc(swaggerOptions);
  *                   properties:
  *                     latitude:
  *                       type: number
- *                       example: 42.3601
+ *                       example: 42.360111
  *                     longitude:
  *                       type: number
- *                       example: -71.0589
+ *                       example: -71.058978
  *       400:
  *         description: Invalid Stop ID
  *         content:
@@ -261,13 +261,33 @@ export const swaggerSpecs = swaggerJsdoc(swaggerOptions);
  *                     properties:
  *                       line:
  *                         type: string
- *                         example: "Red Line"
- *                       previous_stop:
- *                         type: string
- *                         example: "stop_11000"
- *                       next_stop:
- *                         type: string
- *                         example: "stop_11002"
+ *                         example: "Green-B"
+ *                       adjacent_stops:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             id:
+ *                               type: string
+ *                               example: "stop_12345"
+ *                             attributes:
+ *                               type: object
+ *                               properties:
+ *                                 name:
+ *                                   type: string
+ *                                   example: "Stop Name"
+ *                                 description:
+ *                                   type: string
+ *                                   example: "Stop Description"
+ *                                 latitude:
+ *                                   type: number
+ *                                   example: 42.3601
+ *                                 longitude:
+ *                                   type: number
+ *                                   example: -71.0589
+ *                             parent_station:
+ *                               type: string
+ *                               example: "parent_station_123"
  *       400:
  *         description: Invalid Stop ID
  *         content:
