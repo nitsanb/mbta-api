@@ -1,13 +1,13 @@
-import axios from 'axios';
-import { fetchMbtaRailsStops, fetchMbtaRoutesByStopId } from './mbta-api';
+import {
+    fetchMbtaRailsStops,
+    fetchMbtaRoutesByStopId,
+    fetchMbtaRoutePatternsByStopId,
+    fetchMbtaRailsStopsByIds,
+    fetchMbtaStopsIdByTripId
+} from './mbta-api';
 import { AdjacentStopsOnLine, RoutePattern, Stop } from './types';
 
 const BASE_URL = "https://api-v3.mbta.com"
-
-export enum RouteType {
-    LIGHT_RAIL = 0, // Tram, Streetcar, Light rail
-    HEAVY_RAIL = 1, // Subway, Metro
-}
 
 export let stopsCache: Stop[] = [];
 
@@ -69,7 +69,7 @@ export async function fetchAdjacentStops(targetStop: Stop): Promise<AdjacentStop
 async function fetchCanonicalRoutePatterns(stop: Stop): Promise<RoutePattern[]> {
     const parentStopId = stop.parent_station;
     console.log(`Fetching canonical route patterns for parent stop ${parentStopId}`);
-    return axios.get(`${BASE_URL}/route_patterns?filter[stop]=${parentStopId}`)
+    return fetchMbtaRoutePatternsByStopId(parentStopId)
         .then(response => response.data.data
             // We only need one route per line. The "canonical" trips contain all the stops for that line.
             .filter((pattern: any) => pattern.relationships.representative_trip.data.id.includes("canonical"))
@@ -81,9 +81,8 @@ async function fetchCanonicalRoutePatterns(stop: Stop): Promise<RoutePattern[]> 
 }
 
 async function fetchStopsByIds(stopIds: string[]): Promise<Stop[]> {
-    const delimitedStops = stopIds.join(',');
-    console.log(`Fetching stops by IDs: ${delimitedStops}`);
-    const responses = await axios.get(`${BASE_URL}/stops?filter[id]=${delimitedStops}&filter[route_type]=0,1`)
+    console.log(`Fetching stops by IDs: ${stopIds.join(', ')}`);
+    const responses = await fetchMbtaRailsStopsByIds(stopIds)
     return responses.data.data.map((stop: any) => ({
         id: stop.id,
         attributes: stop.attributes,
@@ -93,7 +92,7 @@ async function fetchStopsByIds(stopIds: string[]): Promise<Stop[]> {
 
 async function fetchTripStopIds(tripId: string): Promise<string[]> {
     console.log(`Fetching stops for trip ${tripId}`);
-    const stopIds = await axios.get(`${BASE_URL}/trips/${tripId}?include=stops`)
+    const stopIds = await fetchMbtaStopsIdByTripId(tripId)
         .then(response => response.data.data.relationships.stops.data
             .map((stop: any) => (stop.id))
         );
