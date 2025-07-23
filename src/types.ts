@@ -3,8 +3,6 @@ export interface Stop {
     id: string
     attributes: Attributes;
     parent_station: string;
-    all_lines?: string[];
-    neighbors?: string[];
 }
 
 export interface Attributes {
@@ -18,4 +16,14 @@ export interface Attributes {
 export interface Coordinates {
     latitude: number;
     longitude: number;
+}
+
+export interface RoutePattern {
+    representative_trip: string;
+    route_name: string;
+}
+
+export interface AdjacentStopsOnLine {
+    line: string;
+    stops: Stop[];
 }

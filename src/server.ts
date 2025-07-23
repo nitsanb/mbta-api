@@ -1,7 +1,7 @@
 import express from 'express';
-import { Stop, Coordinates } from './types';
+import { Stop, Coordinates, AdjacentStopsOnLine } from './types';
 import swaggerUi from 'swagger-ui-express';
-import { fetchAllStops, fetchAndCacheAllStops, fetchLinesByParentStation } from './mbta-api';
+import { fetchAllStops, fetchAndCacheAllStops, fetchLineNamesByParentStation, fetchAdjacentStops } from './mbta-api';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
@@ -105,12 +105,54 @@ app.get('/stops/:stopId/lines', async (req, res) => {
         }
 
         // Fetch lines for the stop
-        console.log(`Fetching lines for stop ${stop.parent_station}`);
-        const lines = await fetchLinesByParentStation(stop.parent_station);
-        console.log(`Fetched ${lines.length} lines`);
+        const lines = await fetchLineNamesByParentStation(stop.parent_station);
         const apiResponse: ApiResponse<string[]> = {
             success: true,
             data: lines
+        };
+
+        res.json(apiResponse);
+    } catch (error) {
+        console.error('Error fetching lines going through stop:', error);
+
+        const apiResponse: ApiResponse<null> = {
+            success: false,
+            error: 'Failed to fetch lines going through stop'
+        };
+
+        res.status(500).json(apiResponse);
+    }
+});
+
+app.get('/stops/:stopId/adjacent_stops', async (req, res) => {
+    const { stopId } = req.params;
+    // Validate stopId
+    const id = parseInt(stopId);
+    if (isNaN(id) || id < 10000 || id > 99999) {
+        const response: ApiResponse<null> = {
+            success: false,
+            error: 'Invalid Stop ID - Light/Heavy rail stop IDs must be positive 5-digit integers.'
+        };
+        return res.status(400).json(response);
+    }
+
+    try {
+        const allStops = await fetchAllStops();
+        // Check if the stop exists
+        const stop = allStops.find(s => s.id === stopId);
+        if (!stop) {
+            return res.status(404).json({
+                success: false,
+                error: 'Stop not found'
+            });
+        }
+
+        // Fetch lines for the stop
+        const adjacentStopsArray = await fetchAdjacentStops(stop);
+
+        const apiResponse: ApiResponse<AdjacentStopsOnLine[]> = {
+            success: true,
+            data: adjacentStopsArray
         };
 
         res.json(apiResponse);
