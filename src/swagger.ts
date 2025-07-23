@@ -8,7 +8,7 @@ const swaggerOptions = {
         info: {
             title: 'TypeScript API Server',
             version: '1.0.0',
-            description: 'A simple Express server that fetches data from external APIs',
+            description: 'A simple Express server that fetches data from the MBTA\'s APIs',
         },
         servers: [
             {
