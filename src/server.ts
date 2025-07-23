@@ -1,7 +1,12 @@
 import express from 'express';
 import { Stop, Coordinates, AdjacentStopsOnLine } from './types';
 import swaggerUi from 'swagger-ui-express';
-import { fetchAllStops, fetchAndCacheAllStops, fetchLineNamesByParentStation, fetchAdjacentStops } from './mbta-api';
+import {
+    fetchAllStops,
+    fetchAndCacheAllStops,
+    fetchLineNamesByParentStation,
+    fetchAdjacentStops
+} from './data';
 import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
@@ -37,6 +42,7 @@ app.get('/stops', async (_, res) => {
     }
 });
 
+// Fetch GPS coordinates of a stop by its ID
 app.get('/stops/:stopId/coordinates', async (req, res) => {
     const { stopId } = req.params;
     // Validate stopId
@@ -81,6 +87,7 @@ app.get('/stops/:stopId/coordinates', async (req, res) => {
     }
 });
 
+// Fetch line names going through a stop by its ID
 app.get('/stops/:stopId/lines', async (req, res) => {
     const { stopId } = req.params;
     // Validate stopId
@@ -124,6 +131,7 @@ app.get('/stops/:stopId/lines', async (req, res) => {
     }
 });
 
+// Fetch adjacent stops on each line going through a stop for a given stop ID
 app.get('/stops/:stopId/adjacent_stops', async (req, res) => {
     const { stopId } = req.params;
     // Validate stopId
@@ -157,11 +165,11 @@ app.get('/stops/:stopId/adjacent_stops', async (req, res) => {
 
         res.json(apiResponse);
     } catch (error) {
-        console.error('Error fetching lines going through stop:', error);
+        console.error('Error fetching adjacent stops:', error);
 
         const apiResponse: ApiResponse<null> = {
             success: false,
-            error: 'Failed to fetch lines going through stop'
+            error: 'Failed to fetch adjacent stops'
         };
 
         res.status(500).json(apiResponse);
