@@ -5,7 +5,7 @@ export interface Stop {
     parent_station: string;
 }
 
-export interface Attributes {
+interface Attributes {
     name: string;
     description: string;
     line: string;
