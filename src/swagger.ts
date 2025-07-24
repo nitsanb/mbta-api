@@ -1,4 +1,4 @@
-import { PORT } from './env';
+import { PORT } from './server';
 import swaggerJsdoc from 'swagger-jsdoc';
 
 // Swagger configuration

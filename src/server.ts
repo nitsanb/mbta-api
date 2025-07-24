@@ -7,9 +7,9 @@ import {
     fetchLineNamesByParentStation,
     fetchAdjacentStops
 } from './data';
-import { PORT } from './env';
 import { swaggerSpecs } from './swagger';
 
+export const PORT = process.env.PORT || 3000;
 const app = express();
 
 // Middleware

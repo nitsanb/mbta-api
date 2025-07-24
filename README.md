@@ -1,2 +1,94 @@
 # mbta-api
-API layer to retrieve MBTA Stops information + Testing
+
+A simple server and API layer to retrieve MBTA Stops information.
+
+## Install & Run
+
+### Requirements
+
+- Node.js (v16+ recommended)
+- npm
+
+### Installation
+
+Clone this repository, then from its root folder run:
+
+```sh
+npm install
+```
+
+### Build
+
+```sh
+npm run build
+```
+
+### Run (production)
+
+```sh
+npm start
+```
+
+### Run (development, with hot-reload)
+
+```sh
+npm run dev
+```
+
+## Design
+
+The service retrievs information from the MBTA and displays it in a specific manner meeting the requirements. This is done in 3 layers:
+
+1. **Service** (`server.ts`, `types.ts`): The types define the data objects returned by the server (`Stop`, `Coordinates`, `AdjacentStopOnLine`). The server exposes an API to fetch the required information and returns an ApiResponse containing the data object(s) (or error).
+
+2. **Data retrieval** (`mbta-api.ts`): All calls to the MBTA API are done here.
+
+3. **Data processing** (`data.ts`): The intermediary layer retrieves and processes the data from the MBTA and applies any necessary logic, before returning it as the required type to the service layer.
+
+This separation helps with readability and discoverability, as well as maintenance and extension. For example, changes to the MBTA API can be done in a single layer provided it returns what is expected; a change in requirement of how to display the data can be done in the service layer, as long as the data is being retrieved.
+
+### Why TypeScript?
+
+- TypeScript is common for web apps and provides type safety. It also improves maintainability and clarity, especially for API servers.
+- I have recently used TypeScript for Appium projects, so it fits my workflow.
+
+### Library Choices
+
+I used libraries recommended by Claude (AI assistant). In a typical work setting I would:
+  - Review official documentation and alternatives.
+  - Look at open source examples.
+  - Consult with colleagues for best practices.
+
+#### Main Libraries
+
+- [Express](https://expressjs.com/) - Web server framework
+- [Axios](https://axios-http.com/) - HTTP client for MBTA API calls
+- [swagger-jsdoc](https://github.com/Surnet/swagger-jsdoc) & [swagger-ui-express](https://github.com/scottie1984/swagger-ui-express) - API documentation
+
+## Assumptions
+
+- Only light and heavy rail are supported (MBTA route types 0 & 1, no commuter rail).
+- A "stop" as described in the requirements refers to a human-inferred stop (can have multiple lines), which differs from the MBTA API's stop object which may be line-specific.
+- All stops have 5-digit IDs and a parent station.
+
+## Challenges
+
+- The native MBTA "Stop" object is specific to a single line. Additional lines passing through the same stop can be found by looking at the `parent_stop`.
+- Getting adjacent stops on each line presented an additional challenge - Stop sequences can only be found in Trips which require a Stop's `route_pattern`.
+- There are several route patterns for each stop+line combination. The service uses the "canonical" term to identify those that include all of the stops, but those also contain duplicates (see limitations).
+
+## Limitations
+
+- All the endpoints require a stop ID, but those are not intuitive.
+- The Stop data object provided by this service is simplified to only include attributes relevant to the requirements.
+- When retrieving adjacent stops for each line, the route pattern duplicates are pruned by the Line name. However, the red line branches are both named Red Line so this is an open issue.
+- Stations that have lines which are not light/heavy rail may produce empty adjacent stop data. This is a low severity issue.
+
+## Future Work
+
+- Fix the open issues (limitations).
+- Host the API on a cloud service for public access.
+- Build a UI, such as:
+  - A mobile app.
+  - Integration with Google Maps.
+- Support additonal transportation modes (e.g. Commuter Rail)
