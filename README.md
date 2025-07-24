@@ -35,6 +35,10 @@ npm start
 npm run dev
 ```
 
+### Test (using Swagger)
+
+Go to http://localhost:3000/api-docs/
+
 ## Design
 
 The service retrievs information from the MBTA and displays it in a specific manner meeting the requirements. This is done in 3 layers:
