@@ -77,7 +77,7 @@ I used libraries recommended by Claude (AI assistant). In a typical work setting
 
 ## Challenges
 
-- The native MBTA "Stop" object is specific to a single line. Additional lines passing through the same stop can be found by looking at the `parent_stop`.
+- The native MBTA "Stop" object is specific to a single line. Additional lines passing through the same stop can be found by looking at the `parent_station`.
 - Getting adjacent stops on each line presented an additional challenge - Stop sequences can only be found in Trips which require a Stop's `route_pattern`.
 - There are several route patterns for each stop+line combination. The service uses the "canonical" term to identify those that include all of the stops, but those also contain duplicates (see limitations).
 
@@ -86,7 +86,7 @@ I used libraries recommended by Claude (AI assistant). In a typical work setting
 - All the endpoints require a stop ID, but those are not intuitive.
 - The Stop data object provided by this service is simplified to only include attributes relevant to the requirements.
 - When retrieving adjacent stops for each line, the route pattern duplicates are pruned by the Line name. However, the red line branches are both named Red Line so this is an open issue.
-- Stations that have lines which are not light/heavy rail may produce empty adjacent stop data. This is a low severity issue.
+- Stations served by lines other than light/heavy rail may produce empty adjacent stop data. This is a low severity issue.
 
 ## Testing
 
@@ -100,7 +100,7 @@ This version of the project does not contain tests. See [QUALITY_STRATEGY.md](QU
 - Build a UI, such as:
   - A mobile app.
   - Integration with Google Maps.
-- Support additonal transportation modes (e.g. Commuter Rail)
+- Support additional transportation modes (e.g. Commuter Rail)
 
 ## LLM Disclaimer
 
